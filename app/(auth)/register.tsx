@@ -1,35 +1,28 @@
 import { Fonts } from '@/assets/fonts';
 import { IMAGES } from '@/assets/images';
 import CustomButton from '@/components/CustomButton';
-import CustomCheckbox from '@/components/CustomCheckbox';
 import CustomImage from '@/components/CustomImage';
-import CustomInput from '@/components/CustomInput';
+import ControlledCustomInput from '@/components/ControlledCustomInput';
 import CustomText from '@/components/CustomText';
 import { Colors } from '@/constants/colors';
 import { metrics } from '@/utils/metrics';
 import { router } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRegisterForm, RegisterFormData } from '@/hooks/useAuthForm';
 
 export default function RegisterScreen() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [email, setEmail] = useState('');
-  const [number, setNumber] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const {
+    control,
+    handleSubmit,
+  } = useRegisterForm();
 
-  const handleLogin = useCallback(() => {
-    if (!username.trim()) {
-      return;
-    }
-    if (!password.trim()) {
-      return;
-    }
+  const handleSignUp = useCallback((data: RegisterFormData) => {
+    console.log('Registration data:', data);
     // Navigate to main app
     router.replace('/(main)');
-  }, [username, password]);
+  }, []);
 
   const handleSocialLogin = useCallback((provider: string) => {
     console.log(`${provider} login`);
@@ -78,46 +71,52 @@ export default function RegisterScreen() {
 
             {/* Input Fields */}
             <View style={styles.inputContainer}>
-              <CustomInput
+              <ControlledCustomInput
+                control={control}
+                name="username"
                 placeholder="Input your full name"
-                value={username}
-                onChangeText={setUsername}
                 placeholderTextColor={Colors.gray}
               />
 
-              <CustomInput
+              <ControlledCustomInput
+                control={control}
+                name="email"
                 placeholder="Input your email"
-                value={email}
-                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
                 placeholderTextColor={Colors.gray}
               />
-              <CustomInput
+
+              <ControlledCustomInput
+                control={control}
+                name="number"
                 placeholder="Enter Your Number"
-                value={number}
-                onChangeText={setNumber}
+                keyboardType="phone-pad"
                 placeholderTextColor={Colors.gray}
               />
-              <CustomInput
+
+              <ControlledCustomInput
+                control={control}
+                name="password"
                 placeholder="Enter your password"
-                value={password}
-                onChangeText={setPassword}
                 secureTextEntry
                 placeholderTextColor={Colors.gray}
                 right={true}
               />
-              <CustomInput
+
+              <ControlledCustomInput
+                control={control}
+                name="confirmPassword"
                 placeholder="Confirm your password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
                 secureTextEntry
                 placeholderTextColor={Colors.gray}
                 right={true}
               />
             </View>
-            {/* Login Button */}
+            {/* Sign Up Button */}
             <CustomButton
               label="Sign Up"
-              onPress={handleLogin}
+              onPress={handleSubmit(handleSignUp)}
               backgroundColor={Colors.primary}
               borderRadius={12}
               marginTop={metrics.height(32)}
@@ -207,8 +206,8 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
   inputContainer: {
-    marginTop: metrics.height(20),
-  },
+    marginTop: metrics.height(30),
+  },  
   socialIconsContainer: {
     flexDirection: 'row',
     gap: metrics.width(20),

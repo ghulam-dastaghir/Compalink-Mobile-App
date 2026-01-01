@@ -1,2 +1,1 @@
-// Schemas will be added here
-
+export * from './authSchemas';

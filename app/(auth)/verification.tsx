@@ -11,11 +11,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { normalizeSize } from '@/utils/normalize';
 import { heightDP } from '@/utils/responsive';
+import { Controller } from 'react-hook-form';
+import { useVerificationForm, VerificationFormData } from '@/hooks/useAuthForm';
 
 export default function VerificationScreen() {
-  const [code, setCode] = useState(['', '', '', '']);
-  const [timeRemaining, setTimeRemaining] = useState(300); // 5 minutes in seconds
+  const [timeRemaining, setTimeRemaining] = useState(120); // 2 minutes in seconds
+  const [localCode, setLocalCode] = useState(['', '', '', '']); // Local state for immediate UI updates
   const inputRefs = useRef<(TextInput | null)[]>([]);
+  
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+  } = useVerificationForm();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -38,38 +47,74 @@ export default function VerificationScreen() {
   };
 
   const handleCodeChange = (text: string, index: number) => {
-    const newCode = [...code];
-    newCode[index] = text.slice(-1); // Only take the last character
-    setCode(newCode);
+    // Remove any non-numeric characters
+    const numericText = text.replace(/\D/g, '');
+    
+    // Update local state immediately for UI
+    const newCodeArray = [...localCode];
+    newCodeArray[index] = numericText.slice(-1) || ''; // Only take last character
+    setLocalCode(newCodeArray);
+    
+    // Sync with React Hook Form for validation
+    const newCode = newCodeArray.join('');
+    setValue('code', newCode, { 
+      shouldValidate: true, 
+      shouldDirty: true,
+      shouldTouch: true 
+    });
 
-    // Auto-focus next input
-    if (text && index < 3) {
-      inputRefs.current[index + 1]?.focus();
+    // Auto-focus next input if digit entered
+    if (numericText && index < 3) {
+      setTimeout(() => {
+        inputRefs.current[index + 1]?.focus();
+      }, 50);
     }
   };
 
   const handleKeyPress = (key: string, index: number) => {
-    if (key === 'Backspace' && !code[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
+    if (key === 'Backspace') {
+      // If current field is empty and backspace is pressed, go to previous field
+      if (!localCode[index] && index > 0) {
+        // Clear previous field
+        const newCodeArray = [...localCode];
+        newCodeArray[index - 1] = '';
+        setLocalCode(newCodeArray);
+        
+        // Sync with React Hook Form
+        const newCode = newCodeArray.join('');
+        setValue('code', newCode, { shouldValidate: true });
+        
+        // Focus previous input
+        setTimeout(() => {
+          inputRefs.current[index - 1]?.focus();
+        }, 50);
+      } else if (localCode[index]) {
+        // Clear current field
+        const newCodeArray = [...localCode];
+        newCodeArray[index] = '';
+        setLocalCode(newCodeArray);
+        
+        // Sync with React Hook Form
+        const newCode = newCodeArray.join('');
+        setValue('code', newCode, { shouldValidate: true });
+      }
     }
   };
 
-  const handleContinue = useCallback(() => {
-    const fullCode = code.join('');
-    if (fullCode.length === 4) {
-      console.log('Verification code:', fullCode);
-      // Navigate to update password screen
-      router.push('/(auth)/update-password');
-    }
-  }, [code]);
+  const handleContinue = useCallback((data: VerificationFormData) => {
+    console.log('Verification code:', data.code);
+    // Navigate to update password screen
+    router.push('/(auth)/update-password');
+  }, []);
 
   const handleResendCode = useCallback(() => {
-    setTimeRemaining(300); // Reset timer
-    setCode(['', '', '', '']);
+    setTimeRemaining(120); // Reset timer to 2 minutes
+    setLocalCode(['', '', '', '']); // Reset local state
+    setValue('code', ''); // Reset form state
     inputRefs.current[0]?.focus();
     // Implement resend logic
     console.log('Resending code...');
-  }, []);
+  }, [setValue]);
 
   const handleChangeNumber = useCallback(() => {
     router.back();
@@ -141,24 +186,43 @@ export default function VerificationScreen() {
 
             {/* OTP Input Boxes */}
             <View style={styles.otpContainer}>
-              {code.map((digit, index) => (
-                <TextInput
+              {localCode.map((digit, index) => (
+                <Controller
                   key={index}
-                  ref={(ref) => {
-                    inputRefs.current[index] = ref;
-                  }}
-                  style={styles.otpBox}
-                  value={digit}
-                  onChangeText={(text) => handleCodeChange(text, index)}
-                  onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
-                  keyboardType="number-pad"
-                  maxLength={1}
-                  textAlign="center"
-                  textContentType="oneTimeCode"
-                  selectTextOnFocus
+                  control={control}
+                  name="code"
+                  render={() => (
+                    <TextInput
+                      ref={(ref) => {
+                        inputRefs.current[index] = ref;
+                      }}
+                      style={styles.otpBox}
+                      value={digit}
+                      onChangeText={(text) => handleCodeChange(text, index)}
+                      onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
+                      keyboardType="number-pad"
+                      maxLength={1}
+                      textAlign="center"
+                      textContentType="oneTimeCode"
+                      selectTextOnFocus
+                    />
+                  )}
                 />
               ))}
             </View>
+            
+            {/* Error Message */}
+            {errors.code && (
+              <View style={styles.errorContainer}>
+                <CustomText
+                  label={errors.code.message || 'Invalid verification code'}
+                  fontSize={12}
+                  fontFamily={Fonts.Regular}
+                  color={Colors.red}
+                  marginTop={metrics.height(8)}
+                />
+              </View>
+            )}
 
             {/* Timer */}
             <View style={styles.timerRow}>
@@ -179,7 +243,7 @@ export default function VerificationScreen() {
             {/* Continue Button */}
             <CustomButton
               label="Continue"
-              onPress={handleContinue}
+              onPress={handleSubmit(handleContinue)}
               backgroundColor={Colors.primary}
               borderRadius={12}
               fontSize={16}
@@ -266,6 +330,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: metrics.height(8),
     top: metrics.height(15),
+  },
+  errorContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: metrics.height(8),
   },
 });
 

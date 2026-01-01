@@ -1,26 +1,28 @@
 import { Fonts } from '@/assets/fonts';
 import CustomButton from '@/components/CustomButton';
-import CustomInput from '@/components/CustomInput';
+import ControlledCustomInput from '@/components/ControlledCustomInput';
 import CustomText from '@/components/CustomText';
 import { Colors } from '@/constants/colors';
 import { metrics } from '@/utils/metrics';
 import { router } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useResetPasswordForm, ResetPasswordFormData } from '@/hooks/useAuthForm';
 
 export default function ResetPasswordScreen() {
-  const [emailOrPhone, setEmailOrPhone] = useState('');
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useResetPasswordForm();
 
-  const handleReset = useCallback(() => {
-    if (!emailOrPhone.trim()) {
-      return;
-    }
-    console.log('Reset password for:', emailOrPhone);
+  const handleReset = useCallback((data: ResetPasswordFormData) => {
+    console.log('Reset password for:', data.emailOrPhone);
     // Navigate to verification screen
     router.push('/(auth)/verification');
-  }, [emailOrPhone]);
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -65,19 +67,18 @@ export default function ResetPasswordScreen() {
                 color={Colors.black}
                 marginBottom={metrics.height(10)}
               />
-              <CustomInput
+              <ControlledCustomInput
+                control={control}
+                name="emailOrPhone"
                 placeholder="+92 310 1314974"
-                value={emailOrPhone}
-                onChangeText={setEmailOrPhone}
                 placeholderTextColor={Colors.gray}
-                keyboardType="default"
                 backgroundColor={'#FAFAFA'}
                 borderColor={'#FAFAFA'}
               />
             </View>
             <CustomButton
               label="Reset"
-              onPress={handleReset}
+              onPress={handleSubmit(handleReset)}
               backgroundColor={Colors.primary}
               borderRadius={12}
               fontSize={16}

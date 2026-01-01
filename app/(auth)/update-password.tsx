@@ -1,34 +1,28 @@
 import { Fonts } from '@/assets/fonts';
 import CustomButton from '@/components/CustomButton';
-import CustomInput from '@/components/CustomInput';
+import ControlledCustomInput from '@/components/ControlledCustomInput';
 import CustomText from '@/components/CustomText';
 import { Colors } from '@/constants/colors';
 import { metrics } from '@/utils/metrics';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useUpdatePasswordForm, UpdatePasswordFormData } from '@/hooks/useAuthForm';
 
 export default function UpdatePasswordScreen() {
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useUpdatePasswordForm();
 
-  const handleSaveUpdate = useCallback(() => {
-    if (!newPassword.trim()) {
-      return;
-    }
-    if (!confirmPassword.trim()) {
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      // Show error - passwords don't match
-      return;
-    }
-    console.log('Updating password...');
+  const handleSaveUpdate = useCallback((data: UpdatePasswordFormData) => {
+    console.log('Updating password...', data);
     // Navigate to next screen or show success
     // router.replace('/(main)');
-  }, [newPassword, confirmPassword]);
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
@@ -67,10 +61,10 @@ export default function UpdatePasswordScreen() {
                 color={Colors.black}
                 marginBottom={metrics.height(10)}
               />
-              <CustomInput
+              <ControlledCustomInput
+                control={control}
+                name="newPassword"
                 placeholder="Enter new password"
-                value={newPassword}
-                onChangeText={setNewPassword}
                 secureTextEntry
                 placeholderTextColor={Colors.gray}
                 backgroundColor={'#FAFAFA'}
@@ -98,10 +92,10 @@ export default function UpdatePasswordScreen() {
                 color={Colors.black}
                 marginBottom={metrics.height(10)}
               />
-              <CustomInput
+              <ControlledCustomInput
+                control={control}
+                name="confirmPassword"
                 placeholder="Confirm new password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
                 secureTextEntry
                 placeholderTextColor={Colors.gray}
                 backgroundColor={'#FAFAFA'}
@@ -116,7 +110,7 @@ export default function UpdatePasswordScreen() {
         <View style={styles.buttonContainer}>
           <CustomButton
             label="Save Update"
-            onPress={handleSaveUpdate}
+            onPress={handleSubmit(handleSaveUpdate)}
             backgroundColor={Colors.primary}
             borderRadius={12}
             fontSize={16}

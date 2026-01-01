@@ -1,33 +1,31 @@
 import { Fonts } from '@/assets/fonts';
 import { IMAGES } from '@/assets/images';
 import CustomButton from '@/components/CustomButton';
-import CustomCheckbox from '@/components/CustomCheckbox';
+import ControlledCustomCheckbox from '@/components/ControlledCustomCheckbox';
 import CustomImage from '@/components/CustomImage';
-import CustomInput from '@/components/CustomInput';
+import ControlledCustomInput from '@/components/ControlledCustomInput';
 import CustomText from '@/components/CustomText';
 import { Colors } from '@/constants/colors';
 import { metrics } from '@/utils/metrics';
 import { router } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { TextInput } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLoginForm, LoginFormData } from '@/hooks/useAuthForm';
 
 export default function LoginScreen() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useLoginForm();
 
-  const handleLogin = useCallback(() => {
-    if (!username.trim()) {
-      return;
-    }
-    if (!password.trim()) {
-      return;
-    }
+  const handleLogin = useCallback((data: LoginFormData) => {
+    console.log('Login data:', data);
     // Navigate to main app
     router.replace('/(main)');
-  }, [username, password]);
+  }, []);
 
   const handleSocialLogin = useCallback((provider: string) => {
     console.log(`${provider} login`);
@@ -79,18 +77,18 @@ export default function LoginScreen() {
 
             {/* Input Fields */}
             <View style={styles.inputContainer}>
-              <CustomInput
+              <ControlledCustomInput
+                control={control}
+                name="username"
                 placeholder="Username"
-                value={username}
-                onChangeText={setUsername}
                 placeholderTextColor={Colors.gray}
                 left={<TextInput.Icon icon="account-outline" size={22} color={Colors.gray} style={{ marginTop: metrics.height(10) }} />}
               />
 
-              <CustomInput
+              <ControlledCustomInput
+                control={control}
+                name="password"
                 placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
                 secureTextEntry
                 placeholderTextColor={Colors.gray}
                 left={<TextInput.Icon icon="lock-outline" size={22} color={Colors.gray} style={{ marginTop: metrics.height(8) }} />}
@@ -111,9 +109,9 @@ export default function LoginScreen() {
                 />
               </TouchableOpacity>
 
-              <CustomCheckbox
-                checked={rememberMe}
-                onPress={() => setRememberMe(!rememberMe)}
+              <ControlledCustomCheckbox
+                control={control}
+                name="rememberMe"
                 label="Remember Me"
                 labelColor={Colors.gray}
                 checkboxColor={Colors.gray}
@@ -123,7 +121,7 @@ export default function LoginScreen() {
             {/* Login Button */}
             <CustomButton
               label="Log In"
-              onPress={handleLogin}
+              onPress={handleSubmit(handleLogin)}
               backgroundColor={Colors.primary}
               borderRadius={12}
               marginTop={metrics.height(32)}
@@ -236,6 +234,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     // gap: metrics.height(16),
+    marginTop: metrics.height(25),
   },
   optionsContainer: {
     flexDirection: 'row',
