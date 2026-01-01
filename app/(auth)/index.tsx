@@ -9,7 +9,7 @@ import { Colors } from '@/constants/colors';
 import { metrics } from '@/utils/metrics';
 import { router } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { TextInput } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,17 +17,14 @@ export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
 
   const handleLogin = useCallback(() => {
     if (!username.trim()) {
       return;
     }
     if (!password.trim()) {
-      setPasswordError('Password is required');
       return;
     }
-    setPasswordError('');
     // Navigate to main app
     router.replace('/(main)');
   }, [username, password]);
@@ -48,7 +45,11 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <View style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -86,15 +87,11 @@ export default function LoginScreen() {
               <CustomInput
                 placeholder="Password"
                 value={password}
-                onChangeText={(text) => {
-                  setPassword(text);  
-                  if (passwordError) setPasswordError('');
-                }}
+                onChangeText={setPassword}
                 secureTextEntry
                 placeholderTextColor={Colors.gray}
                 left={<TextInput.Icon icon="lock-outline" size={22} color={Colors.gray} style={{ marginTop: metrics.height(8) }} />}
                 right={true}
-                InputError={passwordError}
               />
             </View>
 
@@ -211,7 +208,7 @@ export default function LoginScreen() {
             />
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -1,62 +1,39 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import CustomText from '@/components/CustomText';
-import CustomInput from '@/components/CustomInput';
-import CustomButton from '@/components/CustomButton';
-import CustomIcon from '@/components/CustomIcon';
-import { Colors } from '@/constants/colors';
 import { Fonts } from '@/assets/fonts';
+import { IMAGES } from '@/assets/images';
+import CustomButton from '@/components/CustomButton';
+import CustomCheckbox from '@/components/CustomCheckbox';
+import CustomImage from '@/components/CustomImage';
+import CustomInput from '@/components/CustomInput';
+import CustomText from '@/components/CustomText';
+import { Colors } from '@/constants/colors';
 import { metrics } from '@/utils/metrics';
+import { router } from 'expo-router';
+import React, { useCallback, useMemo, useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [email, setEmail] = useState('');
+  const [number, setNumber] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
-  const validateForm = useCallback(() => {
-    const newErrors: Record<string, string> = {};
-
-    if (!fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
-    }
-    if (!email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Invalid email format';
-    }
-    if (!phoneNumber.trim()) {
-      newErrors.phoneNumber = 'Phone number is required';
+  const handleLogin = useCallback(() => {
+    if (!username.trim()) {
+      return;
     }
     if (!password.trim()) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      return;
     }
-    if (!confirmPassword.trim()) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
+    // Navigate to main app
+    router.replace('/(main)');
+  }, [username, password]);
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [fullName, email, phoneNumber, password, confirmPassword]);
-
-  const handleSignUp = useCallback(() => {
-    if (validateForm()) {
-      // Navigate to main app after successful registration
-      router.replace('/(main)');
-    }
-  }, [validateForm]);
-
-  const handleSocialSignUp = useCallback((provider: string) => {
-    console.log(`${provider} sign up`);
-    // Implement social sign up logic
+  const handleSocialLogin = useCallback((provider: string) => {
+    console.log(`${provider} login`);
+    // Implement social login logic
   }, []);
 
   const containerStyle = useMemo(
@@ -69,149 +46,129 @@ export default function RegisterScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <View style={containerStyle}>
-          {/* Header */}
-          <View style={styles.header}>
-            <CustomText
-              label="Registration Page"
-              fontSize={32}
-              fontFamily={Fonts.Bold}
-              color={Colors.text.primary}
-              marginBottom={metrics.height(8)}
-            />
-            <CustomText
-              label="Create your account and treat yourself to a meal at the restaurants you love. Sign up now!"
-              fontSize={14}
-              fontFamily={Fonts.Regular}
-              color={Colors.text.primary}
-              lineHeight={20}
-            />
-          </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={containerStyle}>
+            {/* Header */}
+            <View style={styles.header}>
+              <CustomText
+                label="Registration Page"
+                fontSize={32}
+                fontFamily={Fonts.SemiBold}
+                color={Colors.black}
+                marginBottom={metrics.height(8)}
+              />
+              <CustomText
+                label="Create your account and treat yourself to a meal at the restaurants you love. Sign up now!"
+                fontSize={13}
+                fontFamily={Fonts.Regular}
+                color={Colors.gray}
+                lineHeight={20}
+              />
+            </View>
 
-          {/* Input Fields */}
-          <View style={styles.inputContainer}>
-            <CustomInput
-              placeholder="Input your full name"
-              value={fullName}
-              onChangeText={(text) => {
-                setFullName(text);
-                if (errors.fullName) {
-                  setErrors((prev) => ({ ...prev, fullName: '' }));
-                }
-              }}
-              InputError={errors.fullName}
-            />
+            {/* Input Fields */}
+            <View style={styles.inputContainer}>
+              <CustomInput
+                placeholder="Input your full name"
+                value={username}
+                onChangeText={setUsername}
+                placeholderTextColor={Colors.gray}
+              />
 
-            <CustomInput
-              placeholder="Input your email"
-              value={email}
-              onChangeText={(text) => {
-                setEmail(text);
-                if (errors.email) {
-                  setErrors((prev) => ({ ...prev, email: '' }));
-                }
-              }}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              InputError={errors.email}
-            />
-
-            <CustomInput
-              placeholder="Enter Your Number"
-              value={phoneNumber}
-              onChangeText={(text) => {
-                setPhoneNumber(text);
-                if (errors.phoneNumber) {
-                  setErrors((prev) => ({ ...prev, phoneNumber: '' }));
-                }
-              }}
-              keyboardType="phone-pad"
-              InputError={errors.phoneNumber}
-            />
-
-            <CustomInput
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={(text) => {
-                setPassword(text);
-                if (errors.password) {
-                  setErrors((prev) => ({ ...prev, password: '' }));
-                }
-              }}
-              secureTextEntry
-              right={true}
-              InputError={errors.password}
-            />
-
-            <CustomInput
-              placeholder="Confirm your password"
-              value={confirmPassword}
-              onChangeText={(text) => {
-                setConfirmPassword(text);
-                if (errors.confirmPassword) {
-                  setErrors((prev) => ({ ...prev, confirmPassword: '' }));
-                }
-              }}
-              secureTextEntry
-              right={true}
-              InputError={errors.confirmPassword}
-            />
-          </View>
-
-          {/* Sign Up Button */}
-          <CustomButton
-            label="Sign Up"
-            onPress={handleSignUp}
-            backgroundColor={Colors.primary}
-            borderRadius={12}
-            paddingVertical={metrics.height(16)}
-            marginTop={metrics.height(24)}
-            fontSize={16}
-            fontFamily={Fonts.SemiBold}
-          />
-
-          {/* Social Sign Up */}
-          <View style={styles.socialContainer}>
-            <CustomText
+              <CustomInput
+                placeholder="Input your email"
+                value={email}
+                onChangeText={setEmail}
+                placeholderTextColor={Colors.gray}
+              />
+              <CustomInput
+                placeholder="Enter Your Number"
+                value={number}
+                onChangeText={setNumber}
+                placeholderTextColor={Colors.gray}
+              />
+              <CustomInput
+                placeholder="Enter your password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                placeholderTextColor={Colors.gray}
+                right={true}
+              />
+              <CustomInput
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                placeholderTextColor={Colors.gray}
+                right={true}
+              />
+            </View>
+            {/* Login Button */}
+            <CustomButton
               label="Sign Up"
-              fontSize={14}
-              fontFamily={Fonts.Medium}
-              color={Colors.text.primary}
-              marginBottom={metrics.height(16)}
-              textAlign="center"
+              onPress={handleLogin}
+              backgroundColor={Colors.primary}
+              borderRadius={12}
+              marginTop={metrics.height(32)}
+              fontSize={16}
+              fontFamily={Fonts.Bold}
             />
 
-            <View style={styles.socialIconsContainer}>
-              <TouchableOpacity
-                style={styles.socialIcon}
-                onPress={() => handleSocialSignUp('facebook')}
-              >
-                <CustomIcon family="FontAwesome" name="facebook" size={24} color="#1877F2" />
-              </TouchableOpacity>
+          {/* Social Login */}
+          <View style={styles.socialContainer}>
+            <View style={styles.loginDividerContainer}>
+              <View style={styles.loginDividerLine} />
+              <CustomText
+                label="Sign Up "
+                fontSize={14}
+                fontFamily={Fonts.Medium}
+                color={Colors.gray}
+                marginLeft={metrics.width(12)}
+                marginRight={metrics.width(12)}
+              />
+              <View style={styles.loginDividerLine} />
+            </View>
 
-              <TouchableOpacity
-                style={styles.socialIcon}
-                onPress={() => handleSocialSignUp('google')}
-              >
-                <CustomIcon family="FontAwesome5" name="google" size={24} color="#4285F4" />
-              </TouchableOpacity>
+              <View style={styles.socialIconsContainer}>
+                <TouchableOpacity
+                  style={styles.socialIcon}
+                  activeOpacity={0.8}
+                  onPress={() => handleSocialLogin('facebook')}
+                >
+                  <CustomImage source={IMAGES.FacebookIcon} width={metrics.width(27)} height={metrics.width(27)} />
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.socialIcon}
-                onPress={() => handleSocialSignUp('apple')}
-              >
-                <CustomIcon family="FontAwesome5" name="apple" size={24} color={Colors.icon} />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.socialIcon}
+                  activeOpacity={0.8}
+                  onPress={() => handleSocialLogin('google')}
+                >
+                  <CustomImage source={IMAGES.GoogleIcon} width={metrics.width(27)} height={metrics.width(27)} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.socialIcon}
+                  activeOpacity={0.8}
+                  onPress={() => handleSocialLogin('apple')}
+                >
+                  <CustomImage source={IMAGES.AppleIcon} width={metrics.width(27)} height={metrics.width(27)} />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -219,35 +176,48 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
+  },
+  container: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: metrics.height(20),
+    paddingBottom: metrics.height(80),
   },
   header: {
-    marginTop: metrics.height(40),
-    marginBottom: metrics.height(32),
-  },
-  inputContainer: {
-    gap: metrics.height(16),
+    marginTop: metrics.height(60),
+    marginBottom: metrics.height(32), 
   },
   socialContainer: {
-    marginTop: metrics.height(32),
+    marginTop: metrics.height(30),
     alignItems: 'center',
+  },
+  loginDividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginBottom: metrics.height(10),
+  },
+  loginDividerLine: {
+    flex: 1,
+    height:2,
+    backgroundColor: Colors.borderLine,
+    opacity: 0.3,
+  },
+  inputContainer: {
+    marginTop: metrics.height(20),
   },
   socialIconsContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: metrics.width(24),
+    gap: metrics.width(20),
+    marginTop: metrics.height(10),
   },
   socialIcon: {
     width: metrics.width(48),
     height: metrics.width(48),
-    borderRadius: metrics.width(24),
-    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
   },
 });
-
