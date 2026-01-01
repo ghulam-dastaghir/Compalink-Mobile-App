@@ -8,7 +8,8 @@ import {
   Manrope_800ExtraBold,
   useFonts,
 } from "@expo-google-fonts/manrope";
-import { router, Stack } from 'expo-router';
+import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import 'react-native-reanimated';
@@ -17,10 +18,10 @@ import {
   SafeAreaProvider,
 } from "react-native-safe-area-context";
 import 'react-native-svg';
+import { Colors } from "@/constants/colors";
 
-export const unstable_settings = {
-  anchor: '(auth)',
-};
+SplashScreen.preventAutoHideAsync();
+
 
 
 export default function RootLayout() {
@@ -37,8 +38,7 @@ export default function RootLayout() {
   React.useEffect(() => {
     async function prepare() {
       if (fontsLoaded || fontsError) {
-        // await new Promise((resolve) => setTimeout(resolve, 500));
-        router.replace("/(auth)");
+        await SplashScreen.hideAsync();
       }
     }
 
@@ -48,13 +48,14 @@ export default function RootLayout() {
   return (
      <SafeAreaProvider
       initialMetrics={initialWindowMetrics}
-      style={{ flex: 1, backgroundColor: "black" }}
+      style={{ flex: 1, backgroundColor: Colors.primary }}
     >
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
         <Stack.Screen name="(main)" />
         <Stack.Screen name="(auth)" />
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
      </SafeAreaProvider>
   );
 }

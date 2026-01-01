@@ -4,4 +4,5 @@ export const IMAGES = {
   AppleIcon: require("./Apple.png") as ImageSourcePropType,
   FacebookIcon: require("./Facebook.png") as ImageSourcePropType,
   GoogleIcon: require("./Google.png") as ImageSourcePropType,
+  CompalinkIcon: require("./compalink.png") as ImageSourcePropType,
 } as const;
