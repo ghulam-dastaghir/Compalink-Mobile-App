@@ -1,22 +1,26 @@
 import { Fonts } from '@/assets/fonts';
 import CustomButton from '@/components/CustomButton';
-import CustomInput from '@/components/CustomInput';
 import CustomText from '@/components/CustomText';
 import { Colors } from '@/constants/colors';
-import { metrics,  } from '@/utils/metrics';
+import { metrics } from '@/utils/metrics';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { normalizeSize } from '@/utils/normalize';
 import { heightDP } from '@/utils/responsive';
 import { Controller } from 'react-hook-form';
 import { useVerificationForm, VerificationFormData } from '@/hooks/useAuthForm';
 
+const INITIAL_TIME = 120; // 2 minutes in seconds
+const INITIAL_CODE = ['', '', '', ''] as const;
+const OTP_LENGTH = 4;
+const FOCUS_DELAY = 50;
+
 export default function VerificationScreen() {
-  const [timeRemaining, setTimeRemaining] = useState(120); // 2 minutes in seconds
-  const [localCode, setLocalCode] = useState(['', '', '', '']); // Local state for immediate UI updates
+  const [timeRemaining, setTimeRemaining] = useState(INITIAL_TIME);
+  const [localCode, setLocalCode] = useState<string[]>(Array.from(INITIAL_CODE));
   const inputRefs = useRef<(TextInput | null)[]>([]);
   
   const {
@@ -40,66 +44,59 @@ export default function VerificationScreen() {
     return () => clearInterval(timer);
   }, []);
 
-  const formatTime = (seconds: number) => {
+  const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  }, []);
 
-  const handleCodeChange = (text: string, index: number) => {
-    // Remove any non-numeric characters
+  const handleCodeChange = useCallback((text: string, index: number) => {
     const numericText = text.replace(/\D/g, '');
     
-    // Update local state immediately for UI
-    const newCodeArray = [...localCode];
-    newCodeArray[index] = numericText.slice(-1) || ''; // Only take last character
-    setLocalCode(newCodeArray);
-    
-    // Sync with React Hook Form for validation
-    const newCode = newCodeArray.join('');
-    setValue('code', newCode, { 
-      shouldValidate: true, 
-      shouldDirty: true,
-      shouldTouch: true 
-    });
+    setLocalCode((prev) => {
+      const newCodeArray = [...prev];
+      newCodeArray[index] = numericText.slice(-1) || '';
+      
+      const newCode = newCodeArray.join('');
+      setValue('code', newCode, { 
+        shouldValidate: true, 
+        shouldDirty: true,
+        shouldTouch: true 
+      });
 
-    // Auto-focus next input if digit entered
-    if (numericText && index < 3) {
-      setTimeout(() => {
-        inputRefs.current[index + 1]?.focus();
-      }, 50);
-    }
-  };
-
-  const handleKeyPress = (key: string, index: number) => {
-    if (key === 'Backspace') {
-      // If current field is empty and backspace is pressed, go to previous field
-      if (!localCode[index] && index > 0) {
-        // Clear previous field
-        const newCodeArray = [...localCode];
-        newCodeArray[index - 1] = '';
-        setLocalCode(newCodeArray);
-        
-        // Sync with React Hook Form
-        const newCode = newCodeArray.join('');
-        setValue('code', newCode, { shouldValidate: true });
-        
-        // Focus previous input
+      if (numericText && index < OTP_LENGTH - 1) {
         setTimeout(() => {
-          inputRefs.current[index - 1]?.focus();
-        }, 50);
-      } else if (localCode[index]) {
-        // Clear current field
-        const newCodeArray = [...localCode];
-        newCodeArray[index] = '';
-        setLocalCode(newCodeArray);
-        
-        // Sync with React Hook Form
-        const newCode = newCodeArray.join('');
-        setValue('code', newCode, { shouldValidate: true });
+          inputRefs.current[index + 1]?.focus();
+        }, FOCUS_DELAY);
       }
+
+      return newCodeArray;
+    });
+  }, [setValue]);
+
+  const handleKeyPress = useCallback((key: string, index: number) => {
+    if (key === 'Backspace') {
+      setLocalCode((prev) => {
+        const newCodeArray = [...prev];
+        
+        if (!prev[index] && index > 0) {
+          newCodeArray[index - 1] = '';
+          const newCode = newCodeArray.join('');
+          setValue('code', newCode, { shouldValidate: true });
+          
+          setTimeout(() => {
+            inputRefs.current[index - 1]?.focus();
+          }, FOCUS_DELAY);
+        } else if (prev[index]) {
+          newCodeArray[index] = '';
+          const newCode = newCodeArray.join('');
+          setValue('code', newCode, { shouldValidate: true });
+        }
+
+        return newCodeArray;
+      });
     }
-  };
+  }, [setValue]);
 
   const handleContinue = useCallback((data: VerificationFormData) => {
     console.log('Verification code:', data.code);
@@ -108,28 +105,49 @@ export default function VerificationScreen() {
   }, []);
 
   const handleResendCode = useCallback(() => {
-    setTimeRemaining(120); // Reset timer to 2 minutes
-    setLocalCode(['', '', '', '']); // Reset local state
-    setValue('code', ''); // Reset form state
+    setTimeRemaining(INITIAL_TIME);
+    setLocalCode(Array.from(INITIAL_CODE));
+    setValue('code', '');
     inputRefs.current[0]?.focus();
-    // Implement resend logic
     console.log('Resending code...');
   }, [setValue]);
+
+  const formattedTime = useMemo(() => formatTime(timeRemaining), [timeRemaining, formatTime]);
+  const errorMessage = useMemo(() => errors.code?.message || 'Invalid verification code', [errors.code]);
+  const otpBoxBackgroundColor = useMemo(() => '#FAFAFA', []);
 
   const handleChangeNumber = useCallback(() => {
     router.back();
   }, []);
 
+  const renderOTPInput = useCallback((digit: string, index: number) => (
+    <Controller
+      key={index}
+      control={control}
+      name="code"
+      render={() => (
+        <TextInput
+          ref={(ref) => {
+            inputRefs.current[index] = ref;
+          }}
+          style={[styles.otpBox, { backgroundColor: otpBoxBackgroundColor }]}
+          value={digit}
+          onChangeText={(text) => handleCodeChange(text, index)}
+          onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
+          keyboardType="number-pad"
+          maxLength={1}
+          textAlign="center"
+          textContentType="oneTimeCode"
+          selectTextOnFocus
+        />
+      )}
+    />
+  ), [control, handleCodeChange, handleKeyPress, otpBoxBackgroundColor]);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.container}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          bounces={false}
-        >
-          <View style={styles.header}>
+      <View style={styles.header}>
             <CustomText
               label="Verification"
               fontSize={25}
@@ -164,6 +182,17 @@ export default function VerificationScreen() {
               </TouchableOpacity>
             </View>
           </View>
+        <KeyboardAwareScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          enableOnAndroid={true}
+          bounces={false}
+          scrollEventThrottle={16}
+          removeClippedSubviews={true}
+        >
+         
 
           <View style={styles.centeredContent}>
             {/* Verification Code Label */}
@@ -186,36 +215,14 @@ export default function VerificationScreen() {
 
             {/* OTP Input Boxes */}
             <View style={styles.otpContainer}>
-              {localCode.map((digit, index) => (
-                <Controller
-                  key={index}
-                  control={control}
-                  name="code"
-                  render={() => (
-                    <TextInput
-                      ref={(ref) => {
-                        inputRefs.current[index] = ref;
-                      }}
-                      style={styles.otpBox}
-                      value={digit}
-                      onChangeText={(text) => handleCodeChange(text, index)}
-                      onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
-                      keyboardType="number-pad"
-                      maxLength={1}
-                      textAlign="center"
-                      textContentType="oneTimeCode"
-                      selectTextOnFocus
-                    />
-                  )}
-                />
-              ))}
+              {localCode.map((digit, index) => renderOTPInput(digit, index))}
             </View>
             
             {/* Error Message */}
             {errors.code && (
               <View style={styles.errorContainer}>
                 <CustomText
-                  label={errors.code.message || 'Invalid verification code'}
+                  label={errorMessage}
                   fontSize={12}
                   fontFamily={Fonts.Regular}
                   color={Colors.red}
@@ -233,7 +240,7 @@ export default function VerificationScreen() {
                 color={Colors.gray}
               />
               <CustomText
-                label={formatTime(timeRemaining)}
+                label={formattedTime}
                 fontSize={12}
                 fontFamily={Fonts.Regular}
                 color={Colors.gray}
@@ -251,7 +258,7 @@ export default function VerificationScreen() {
               marginTop={metrics.height(80)}
             />
           </View>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </View>
     </SafeAreaView>
   );
@@ -265,11 +272,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
+    justifyContent: 'center',
     paddingHorizontal: metrics.width(25),
-    paddingTop: metrics.height(20),
-    paddingBottom: metrics.height(40),
+    paddingVertical: metrics.height(40),
   },
   backButton: {
     position: 'absolute',
@@ -283,8 +293,9 @@ const styles = StyleSheet.create({
   },
   header: {
     width: '100%',
-    marginTop: metrics.height(60),
     marginBottom: metrics.height(40),
+    paddingHorizontal: metrics.width(25),
+    paddingTop: metrics.height(70),
   },
   descriptionRow: {
     marginBottom: metrics.height(4),
@@ -295,10 +306,8 @@ const styles = StyleSheet.create({
     marginTop: metrics.height(4),
   },
   centeredContent: {
-    flex: 1,
-    justifyContent: 'center',
+    width: '100%',
     alignItems: 'center',
-    minHeight: metrics.height(400),
   },
   codeLabelRow: {
     width: '100%',
@@ -317,7 +326,6 @@ const styles = StyleSheet.create({
   otpBox: {
     flex: 1,
     height: heightDP(60),
-    backgroundColor: '#FAFAFA',
     borderRadius: metrics.width(8),
     fontSize: normalizeSize(16),
     fontFamily: Fonts.SemiBold,

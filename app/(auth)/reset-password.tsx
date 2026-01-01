@@ -5,9 +5,10 @@ import CustomText from '@/components/CustomText';
 import { Colors } from '@/constants/colors';
 import { metrics } from '@/utils/metrics';
 import { router } from 'expo-router';
-import React, { useCallback } from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useResetPasswordForm, ResetPasswordFormData } from '@/hooks/useAuthForm';
 
@@ -15,31 +16,41 @@ export default function ResetPasswordScreen() {
   const {
     control,
     handleSubmit,
-    formState: { errors },
   } = useResetPasswordForm();
 
   const handleReset = useCallback((data: ResetPasswordFormData) => {
     console.log('Reset password for:', data.emailOrPhone);
-    // Navigate to verification screen
     router.push('/(auth)/verification');
   }, []);
 
+  const handleBack = useCallback(() => {
+    router.back();
+  }, []);
+
+  const inputBackgroundColor = useMemo(() => '#FAFAFA', []);
+  const iconSize = useMemo(() => 24, []);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <View style={styles.container}>
-        <TouchableOpacity
+      <TouchableOpacity
           style={styles.backButton}
-          onPress={() => router.back()}
+          onPress={handleBack}
           activeOpacity={0.7}
         >
-          <MaterialIcons name="arrow-back-ios" size={24} color={Colors.black} />
+          <MaterialIcons name="arrow-back-ios" size={iconSize} color={Colors.black} />
         </TouchableOpacity>
+      <View style={styles.container}>
+        
 
-        <ScrollView
+        <KeyboardAwareScrollView
+          style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          enableOnAndroid={true}
           bounces={false}
+          scrollEventThrottle={16}
+          removeClippedSubviews={true}
         >
           <View style={styles.header}>
             <CustomText
@@ -72,8 +83,8 @@ export default function ResetPasswordScreen() {
                 name="emailOrPhone"
                 placeholder="+92 310 1314974"
                 placeholderTextColor={Colors.gray}
-                backgroundColor={'#FAFAFA'}
-                borderColor={'#FAFAFA'}
+                backgroundColor={inputBackgroundColor}
+                borderColor={inputBackgroundColor}
               />
             </View>
             <CustomButton
@@ -86,7 +97,7 @@ export default function ResetPasswordScreen() {
               marginTop={metrics.height(60)}
             />
           </View>
-        </ScrollView>
+        </KeyboardAwareScrollView>
       </View>
     </SafeAreaView>
   );
@@ -100,6 +111,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: metrics.width(25),
@@ -107,8 +121,6 @@ const styles = StyleSheet.create({
     paddingBottom: metrics.height(40),
   },
   backButton: {
-    position: 'absolute',
-    top: metrics.height(20),
     left: metrics.width(25),
     width: metrics.width(40),
     height: metrics.width(40),
