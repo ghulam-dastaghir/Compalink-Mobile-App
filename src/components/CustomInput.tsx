@@ -38,6 +38,8 @@ interface CustomInputProps {
   labelFontSize?: number;
   labelFontFamily?: string;
   textMarginBottom?: number;
+  backgroundColor?: string;
+  borderColor?: string;
 }
 
 const CustomInput: React.FC<Omit<ViewStyle & TextStyle & TextInputProps, 'left' | 'right'> & CustomInputProps> = ({
@@ -74,6 +76,8 @@ const CustomInput: React.FC<Omit<ViewStyle & TextStyle & TextInputProps, 'left' 
   labelFontSize,
   labelFontFamily,
   textMarginBottom,
+  backgroundColor,
+  borderColor,
   ...restProps
 }) => {
   const styles = useCustomInputStyle();
@@ -87,10 +91,10 @@ const CustomInput: React.FC<Omit<ViewStyle & TextStyle & TextInputProps, 'left' 
           {
             fontSize: normalizeSize(14),
             fontFamily: Fonts.Regular,
-            backgroundColor: 'transparent',
+            backgroundColor: backgroundColor ||'transparent',
             borderWidth:1,
             borderRadius: normalizeSize(6),
-            borderColor: Colors.borderLine,
+            borderColor: borderColor || Colors.borderLine,
           },
           textStyle,
         ]}
@@ -137,6 +141,9 @@ const CustomInput: React.FC<Omit<ViewStyle & TextStyle & TextInputProps, 'left' 
         onFocus={onFocus}
         autoCorrect={false}
         onBlur={onBlur}
+        selectionColor={Colors.primary}
+        cursorColor={Colors.primary}
+        underlineColorAndroid="transparent"
         // textAlignVertical={multiline && Platform.OS === 'android' ? 'top' : 'center'}
         {...restProps}
       />

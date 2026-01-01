@@ -33,6 +33,9 @@ export default function LoginScreen() {
     console.log(`${provider} login`);
     // Implement social login logic
   }, []);
+  const handleForgetPassword = useCallback(() => {
+     router.push('/(auth)/reset-password')
+  }, [router]);
 
   const containerStyle = useMemo(
     () => ({
@@ -97,7 +100,9 @@ export default function LoginScreen() {
 
             {/* Options */}
             <View style={styles.optionsContainer}>
-              <TouchableOpacity onPress={() => console.log('Forget Password')}>
+              <TouchableOpacity onPress={handleForgetPassword}
+               activeOpacity={0.8}
+              >
                 <CustomText
                   label="Forget Password"
                   fontSize={13}
