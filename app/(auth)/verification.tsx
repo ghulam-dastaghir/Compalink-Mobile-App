@@ -58,8 +58,8 @@ export default function VerificationScreen() {
     const fullCode = code.join('');
     if (fullCode.length === 4) {
       console.log('Verification code:', fullCode);
-      // Navigate to next screen
-      // router.replace('/(main)');
+      // Navigate to update password screen
+      router.push('/(auth)/update-password');
     }
   }, [code]);
 
