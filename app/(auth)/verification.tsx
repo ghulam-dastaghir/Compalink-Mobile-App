@@ -184,7 +184,7 @@ export default function VerificationScreen() {
               borderRadius={12}
               fontSize={16}
               fontFamily={Fonts.Bold}
-              marginTop={metrics.height(40)}
+              marginTop={metrics.height(80)}
             />
           </View>
         </ScrollView>
@@ -255,8 +255,8 @@ const styles = StyleSheet.create({
     height: heightDP(60),
     backgroundColor: '#FAFAFA',
     borderRadius: metrics.width(8),
-    fontSize: normalizeSize(20),
-    fontFamily: Fonts.Bold,
+    fontSize: normalizeSize(16),
+    fontFamily: Fonts.SemiBold,
     color: Colors.black,
   },
   timerRow: {
@@ -265,6 +265,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: metrics.height(8),
+    top: metrics.height(15),
   },
 });
 
