@@ -18,6 +18,8 @@ export default function ResetPasswordScreen() {
       return;
     }
     console.log('Reset password for:', emailOrPhone);
+    // Navigate to verification screen
+    router.push('/(auth)/verification');
   }, [emailOrPhone]);
 
   return (
