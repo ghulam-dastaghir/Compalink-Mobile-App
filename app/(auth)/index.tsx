@@ -14,6 +14,7 @@ import { TextInput } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useLoginForm, LoginFormData } from '@/hooks/useAuthForm';
+import { useToast } from '@/hooks/useToast';
 
 type InputField = {
   name: 'username' | 'password';
@@ -45,11 +46,13 @@ export default function LoginScreen() {
     control,
     handleSubmit,
   } = useLoginForm();
+  const { showSuccess } = useToast();
 
   const handleLogin = useCallback((data: LoginFormData) => {
     console.log('Login data:', data);
-    router.replace('/(main)');
-  }, []);
+    showSuccess('Login Successful!', 'Welcome back to CompaLink');
+    router.push('/(main)');
+  }, [showSuccess]);
 
   const handleForgetPassword = useCallback(() => {
     router.push('/(auth)/reset-password');

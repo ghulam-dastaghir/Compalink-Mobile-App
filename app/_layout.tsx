@@ -18,6 +18,7 @@ import {
   SafeAreaProvider,
 } from "react-native-safe-area-context";
 import 'react-native-svg';
+import Toast from 'react-native-toast-message';
 import { Colors } from "@/constants/colors";
 
 SplashScreen.preventAutoHideAsync();
@@ -56,6 +57,7 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" />
       </Stack>
       <StatusBar style="light" />
+      <Toast />
      </SafeAreaProvider>
   );
 }
