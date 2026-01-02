@@ -1,5 +1,5 @@
 import { heightDP } from '@/utils/responsive';
-import React, { useState } from 'react';
+import React, { memo, useState } from 'react';
 import { Platform, TextInput as RNTextInput, TextStyle, View, ViewStyle } from 'react-native';
 import { TextInput, TextInputProps } from 'react-native-paper';
 import { Fonts } from '../assets/fonts';
@@ -9,7 +9,7 @@ import { metrics } from '../utils/metrics';
 import { normalizeSize } from '../utils/normalize';
 import CustomText from './CustomText';
 
-interface CustomInputProps {
+export interface CustomInputProps {
   onPress?: () => void;
   errorMessage?: string;
   inputTextColor?: string;
@@ -38,6 +38,8 @@ interface CustomInputProps {
   labelFontSize?: number;
   labelFontFamily?: string;
   textMarginBottom?: number;
+  backgroundColor?: string;
+  borderColor?: string;
 }
 
 const CustomInput: React.FC<Omit<ViewStyle & TextStyle & TextInputProps, 'left' | 'right'> & CustomInputProps> = ({
@@ -74,10 +76,13 @@ const CustomInput: React.FC<Omit<ViewStyle & TextStyle & TextInputProps, 'left' 
   labelFontSize,
   labelFontFamily,
   textMarginBottom,
+  backgroundColor,
+  borderColor,
   ...restProps
 }) => {
   const styles = useCustomInputStyle();
   const [hidePass, setHidePass] = useState(secureTextEntry);
+  const hasError = !!InputError;
 
   return (
     <View style={[styles.main, mainStyle, { marginBottom: metrics.height(Number(marginBottom) || 15) }]}>
@@ -87,10 +92,10 @@ const CustomInput: React.FC<Omit<ViewStyle & TextStyle & TextInputProps, 'left' 
           {
             fontSize: normalizeSize(14),
             fontFamily: Fonts.Regular,
-            backgroundColor: 'transparent',
-            borderWidth:1,
+            backgroundColor: hasError ? Colors.errorBackground : (backgroundColor ||'transparent'),
+            borderWidth: hasError ? 2 : 1,
             borderRadius: normalizeSize(6),
-            borderColor: Colors.borderLine,
+            borderColor: hasError ? (Colors.red) : (borderColor || Colors.borderLine),
           },
           textStyle,
         ]}
@@ -137,21 +142,25 @@ const CustomInput: React.FC<Omit<ViewStyle & TextStyle & TextInputProps, 'left' 
         onFocus={onFocus}
         autoCorrect={false}
         onBlur={onBlur}
+        selectionColor={Colors.primary}
+        cursorColor={Colors.primary}
+        underlineColorAndroid="transparent"
         // textAlignVertical={multiline && Platform.OS === 'android' ? 'top' : 'center'}
         {...restProps}
       />
       {InputError && (
         <CustomText
           label={InputError}
-          marginTop={3}
+          marginTop={normalizeSize(2)}
           translationEnabled={translationEnabledError}
-          color={Colors.black}
-          fontSize={9}
+          color={Colors.red}
+          fontSize={10}
+          fontFamily={Fonts.Regular}
         />
       )}
     </View>
   );
 };
 
-export default CustomInput;
+export default memo(CustomInput);
 

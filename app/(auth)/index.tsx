@@ -1,61 +1,159 @@
 import { Fonts } from '@/assets/fonts';
 import { IMAGES } from '@/assets/images';
 import CustomButton from '@/components/CustomButton';
-import CustomCheckbox from '@/components/CustomCheckbox';
+import ControlledCustomCheckbox from '@/components/ControlledCustomCheckbox';
 import CustomImage from '@/components/CustomImage';
-import CustomInput from '@/components/CustomInput';
+import ControlledCustomInput from '@/components/ControlledCustomInput';
 import CustomText from '@/components/CustomText';
 import { Colors } from '@/constants/colors';
 import { metrics } from '@/utils/metrics';
 import { router } from 'expo-router';
-import React, { useCallback, useMemo, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { TextInput } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useLoginForm, LoginFormData } from '@/hooks/useAuthForm';
+
+type InputField = {
+  name: 'username' | 'password';
+  placeholder: string;
+  icon: string;
+  secureTextEntry?: boolean;
+  showRightIcon?: boolean;
+  iconMarginTop: number;
+};
+
+type SocialProvider = 'facebook' | 'google' | 'apple';
+
+const SocialIconButton = React.memo<{
+  provider: SocialProvider;
+  icon: typeof IMAGES.FacebookIcon;
+  onPress: () => void;
+  iconSize: number;
+  style: any;
+}>(({ icon, onPress, iconSize, style }) => (
+  <TouchableOpacity style={style} activeOpacity={0.8} onPress={onPress}>
+    <CustomImage source={icon} width={iconSize} height={iconSize} />
+  </TouchableOpacity>
+));
+
+SocialIconButton.displayName = 'SocialIconButton';
 
 export default function LoginScreen() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const {
+    control,
+    handleSubmit,
+  } = useLoginForm();
 
-  const handleLogin = useCallback(() => {
-    if (!username.trim()) {
-      return;
-    }
-    if (!password.trim()) {
-      return;
-    }
-    // Navigate to main app
+  const handleLogin = useCallback((data: LoginFormData) => {
+    console.log('Login data:', data);
     router.replace('/(main)');
-  }, [username, password]);
+  }, []);
 
-  const handleSocialLogin = useCallback((provider: string) => {
+  const handleForgetPassword = useCallback(() => {
+    router.push('/(auth)/reset-password');
+  }, []);
+
+  const handleSignUp = useCallback(() => {
+    router.push('/(auth)/register');
+  }, []);
+
+  const handleSocialLogin = useCallback((provider: SocialProvider) => {
     console.log(`${provider} login`);
     // Implement social login logic
   }, []);
 
+  const handleTermsOfService = useCallback(() => {
+    console.log('Terms of Service');
+  }, []);
+
+  const handlePrivacyPolicy = useCallback(() => {
+    console.log('Privacy Policy');
+  }, []);
+
+  const inputFields: InputField[] = useMemo(
+    () => [
+      {
+        name: 'username',
+        placeholder: 'Username',
+        icon: 'account-outline',
+        iconMarginTop: metrics.height(10),
+      },
+      {
+        name: 'password',
+        placeholder: 'Password',
+        icon: 'lock-outline',
+        secureTextEntry: true,
+        showRightIcon: true,
+        iconMarginTop: metrics.height(8),
+      },
+    ],
+    []
+  );
+
+  const socialProviders: Array<{ provider: SocialProvider; icon: typeof IMAGES.FacebookIcon }> = useMemo(
+    () => [
+      { provider: 'facebook', icon: IMAGES.FacebookIcon },
+      { provider: 'google', icon: IMAGES.GoogleIcon },
+      { provider: 'apple', icon: IMAGES.AppleIcon },
+    ],
+    []
+  );
+
   const containerStyle = useMemo(
     () => ({
       flex: 1,
-      backgroundColor: '#FFFFFF',
+      backgroundColor: Colors.white,
       paddingHorizontal: metrics.width(20),
     }),
     []
   );
 
+  const inputIcons = useMemo(
+    () => ({
+      username: (
+        <TextInput.Icon
+          icon="account-outline"
+          size={22}
+          color={Colors.gray}
+          style={{ marginTop: metrics.height(10) }}
+        />
+      ),
+      password: (
+        <TextInput.Icon
+          icon="lock-outline"
+          size={22}
+          color={Colors.gray}
+          style={{ marginTop: metrics.height(8) }}
+        />
+      ),
+    }),
+    []
+  );
+
+  const socialLoginHandlers = useMemo(
+    () => ({
+      facebook: () => handleSocialLogin('facebook'),
+      google: () => handleSocialLogin('google'),
+      apple: () => handleSocialLogin('apple'),
+    }),
+    [handleSocialLogin]
+  );
+
+  const socialIconSize = useMemo(() => metrics.width(27), []);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <KeyboardAvoidingView
+      <KeyboardAwareScrollView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        bounces={false}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={containerStyle}>
+        <View style={containerStyle}>
             {/* Header */}
             <View style={styles.header}>
               <CustomText
@@ -76,28 +174,23 @@ export default function LoginScreen() {
 
             {/* Input Fields */}
             <View style={styles.inputContainer}>
-              <CustomInput
-                placeholder="Username"
-                value={username}
-                onChangeText={setUsername}
-                placeholderTextColor={Colors.gray}
-                left={<TextInput.Icon icon="account-outline" size={22} color={Colors.gray} style={{ marginTop: metrics.height(10) }} />}
-              />
-
-              <CustomInput
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                placeholderTextColor={Colors.gray}
-                left={<TextInput.Icon icon="lock-outline" size={22} color={Colors.gray} style={{ marginTop: metrics.height(8) }} />}
-                right={true}
-              />
+              {inputFields.map((field) => (
+                <ControlledCustomInput
+                  key={field.name}
+                  control={control}
+                  name={field.name}
+                  placeholder={field.placeholder}
+                  placeholderTextColor={Colors.gray}
+                  secureTextEntry={field.secureTextEntry}
+                  right={field.showRightIcon}
+                  left={inputIcons[field.name]}
+                />
+              ))}
             </View>
 
             {/* Options */}
             <View style={styles.optionsContainer}>
-              <TouchableOpacity onPress={() => console.log('Forget Password')}>
+              <TouchableOpacity onPress={handleForgetPassword} activeOpacity={0.8}>
                 <CustomText
                   label="Forget Password"
                   fontSize={13}
@@ -106,9 +199,9 @@ export default function LoginScreen() {
                 />
               </TouchableOpacity>
 
-              <CustomCheckbox
-                checked={rememberMe}
-                onPress={() => setRememberMe(!rememberMe)}
+              <ControlledCustomCheckbox
+                control={control}
+                name="rememberMe"
                 label="Remember Me"
                 labelColor={Colors.gray}
                 checkboxColor={Colors.gray}
@@ -118,7 +211,7 @@ export default function LoginScreen() {
             {/* Login Button */}
             <CustomButton
               label="Log In"
-              onPress={handleLogin}
+              onPress={handleSubmit(handleLogin)}
               backgroundColor={Colors.primary}
               borderRadius={12}
               marginTop={metrics.height(32)}
@@ -142,29 +235,16 @@ export default function LoginScreen() {
             </View>
 
               <View style={styles.socialIconsContainer}>
-                <TouchableOpacity
-                  style={styles.socialIcon}
-                  activeOpacity={0.8}
-                  onPress={() => handleSocialLogin('facebook')}
-                >
-                  <CustomImage source={IMAGES.FacebookIcon} width={metrics.width(27)} height={metrics.width(27)} />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.socialIcon}
-                  activeOpacity={0.8}
-                  onPress={() => handleSocialLogin('google')}
-                >
-                  <CustomImage source={IMAGES.GoogleIcon} width={metrics.width(27)} height={metrics.width(27)} />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.socialIcon}
-                  activeOpacity={0.8}
-                  onPress={() => handleSocialLogin('apple')}
-                >
-                  <CustomImage source={IMAGES.AppleIcon} width={metrics.width(27)} height={metrics.width(27)} />
-                </TouchableOpacity>
+                {socialProviders.map(({ provider, icon }) => (
+                  <SocialIconButton
+                    key={provider}
+                    provider={provider}
+                    icon={icon}
+                    onPress={socialLoginHandlers[provider]}
+                    iconSize={socialIconSize}
+                    style={styles.socialIcon}
+                  />
+                ))}
               </View>
             </View>
 
@@ -176,7 +256,7 @@ export default function LoginScreen() {
                 fontFamily={Fonts.Regular}
                 color={Colors.gray}
               />
-              <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+              <TouchableOpacity onPress={handleSignUp} activeOpacity={0.8}>
                 <CustomText
                   label="Sign Up"
                   fontSize={16}
@@ -186,29 +266,28 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </ScrollView>
+      </KeyboardAwareScrollView>
 
-        {/* Footer - Fixed at bottom */}
-        <View style={styles.footer}>
-          <TouchableOpacity onPress={() => console.log('Terms of Service')}>
-            <CustomText
-              label="Terms of Service"
-              fontSize={14}
-              fontFamily={Fonts.Regular}
-              color={Colors.gray}
-            />
-          </TouchableOpacity>
-          
-          <TouchableOpacity onPress={() => console.log('Privacy Policy')}>
-            <CustomText
-              label="Privacy Policy"
-              fontSize={14}
-              fontFamily={Fonts.Regular}
-              color={Colors.gray}
-            />
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
+      {/* Footer - Fixed at bottom */}
+      <View style={styles.footer}>
+        <TouchableOpacity onPress={handleTermsOfService} activeOpacity={0.8}>
+          <CustomText
+            label="Terms of Service"
+            fontSize={14}
+            fontFamily={Fonts.Regular}
+            color={Colors.gray}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={handlePrivacyPolicy} activeOpacity={0.8}>
+          <CustomText
+            label="Privacy Policy"
+            fontSize={14}
+            fontFamily={Fonts.Regular}
+            color={Colors.gray}
+          />
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -223,14 +302,13 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: metrics.height(80),
   },
   header: {
-    marginTop: metrics.height(90),
+    marginTop: metrics.height(65),
     marginBottom: metrics.height(32), 
   },
   inputContainer: {
-    // gap: metrics.height(16),
+    marginTop: metrics.height(25),
   },
   optionsContainer: {
     flexDirection: 'row',
@@ -238,10 +316,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: metrics.height(5),
     marginBottom: metrics.height(8),
-  },
-  rememberMeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   socialContainer: {
     marginTop: metrics.height(43),
@@ -286,6 +360,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: metrics.width(25),
+    paddingVertical: metrics.height(15),
     backgroundColor: Colors.white,
+    marginBottom: metrics.height(20),
   },
 });

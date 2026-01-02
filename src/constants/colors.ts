@@ -5,6 +5,7 @@ export const Colors = {
   white: '#FFFFFF',
   red:'#E33629',
   primary:'#480DFF',
-  borderLine:'#E9ECEF'
+  borderLine:'#E9ECEF',
+  errorBackground:'#FFE3E3'
 };
 
