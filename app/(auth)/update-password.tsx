@@ -48,7 +48,7 @@ export default function UpdatePasswordScreen() {
     []
   );
 
-  const inputBackgroundColor = useMemo(() => '#FAFAFA', []);
+  const inputBackgroundColor = useMemo(() => Colors.white10, []);
   const iconSize = useMemo(() => 16, []);
 
   return (

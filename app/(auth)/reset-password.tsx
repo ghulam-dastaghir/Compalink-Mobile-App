@@ -27,7 +27,7 @@ export default function ResetPasswordScreen() {
     router.back();
   }, []);
 
-  const inputBackgroundColor = useMemo(() => '#FAFAFA', []);
+  const inputBackgroundColor = useMemo(() => Colors.white10, []);
   const iconSize = useMemo(() => 24, []);
 
   return (

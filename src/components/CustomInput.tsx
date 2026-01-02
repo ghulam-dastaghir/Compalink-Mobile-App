@@ -40,6 +40,8 @@ export interface CustomInputProps {
   textMarginBottom?: number;
   backgroundColor?: string;
   borderColor?: string;
+  height?: number;
+  borderRadius?: number;
 }
 
 const CustomInput: React.FC<Omit<ViewStyle & TextStyle & TextInputProps, 'left' | 'right'> & CustomInputProps> = ({
@@ -78,6 +80,8 @@ const CustomInput: React.FC<Omit<ViewStyle & TextStyle & TextInputProps, 'left' 
   textMarginBottom,
   backgroundColor,
   borderColor,
+  height,
+  borderRadius,
   ...restProps
 }) => {
   const styles = useCustomInputStyle();
@@ -94,7 +98,7 @@ const CustomInput: React.FC<Omit<ViewStyle & TextStyle & TextInputProps, 'left' 
             fontFamily: Fonts.Regular,
             backgroundColor: hasError ? Colors.errorBackground : (backgroundColor ||'transparent'),
             borderWidth: hasError ? 2 : 1,
-            borderRadius: normalizeSize(6),
+            borderRadius: normalizeSize(borderRadius || 6),
             borderColor: hasError ? (Colors.red) : (borderColor || Colors.borderLine),
           },
           textStyle,
@@ -105,7 +109,7 @@ const CustomInput: React.FC<Omit<ViewStyle & TextStyle & TextInputProps, 'left' 
             color: Colors.black,
             // paddingLeft: left ? 0 : 15,
             // paddingRight: right ? 0 : 15,
-            height: multiline ? undefined : heightDP(60),
+            height: multiline ? undefined : heightDP(height || 60),
             // alignItems: 'center',
             // justifyContent: 'center',
             ...(multiline && Platform.OS === 'android' ? { paddingTop: 10 } : {}),

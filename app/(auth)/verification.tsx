@@ -114,7 +114,7 @@ export default function VerificationScreen() {
 
   const formattedTime = useMemo(() => formatTime(timeRemaining), [timeRemaining, formatTime]);
   const errorMessage = useMemo(() => errors.code?.message || 'Invalid verification code', [errors.code]);
-  const otpBoxBackgroundColor = useMemo(() => '#FAFAFA', []);
+  const otpBoxBackgroundColor = useMemo(() => Colors.white10, []);
 
   const handleChangeNumber = useCallback(() => {
     router.back();

@@ -50,7 +50,7 @@ const CustomIcon: React.FC<CustomIconProps> = ({
   family = 'Ionicons',
   name,
   size = 24,
-  color = Colors.icon,
+  color = Colors.black,
   style,
   onPress,
 }) => {
