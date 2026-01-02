@@ -4,18 +4,24 @@ import ControlledCustomInput from '@/components/ControlledCustomInput';
 import CustomText from '@/components/CustomText';
 import { Colors } from '@/constants/colors';
 import { metrics } from '@/utils/metrics';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useUpdatePasswordForm, UpdatePasswordFormData } from '@/hooks/useAuthForm';
 
+type PasswordField = {
+  name: 'newPassword' | 'confirmPassword';
+  label: string;
+  placeholder: string;
+  showHint?: boolean;
+};
+
 export default function UpdatePasswordScreen() {
   const {
     control,
     handleSubmit,
-    formState: { errors },
   } = useUpdatePasswordForm();
 
   const handleSaveUpdate = useCallback((data: UpdatePasswordFormData) => {
@@ -24,15 +30,39 @@ export default function UpdatePasswordScreen() {
     // router.replace('/(main)');
   }, []);
 
+  const passwordFields: PasswordField[] = useMemo(
+    () => [
+      {
+        name: 'newPassword',
+        label: 'New Password',
+        placeholder: 'Enter new password',
+        showHint: true,
+      },
+      {
+        name: 'confirmPassword',
+        label: 'Confirm New Password',
+        placeholder: 'Confirm new password',
+        showHint: false,
+      },
+    ],
+    []
+  );
+
+  const inputBackgroundColor = useMemo(() => '#FAFAFA', []);
+  const iconSize = useMemo(() => 16, []);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.container}>
         <KeyboardAwareScrollView
+          style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           enableOnAndroid={true}
-          enableAutomaticScroll={true}
+          bounces={false}
+          scrollEventThrottle={16}
+          removeClippedSubviews={true}
         >
           <View style={styles.header}>
             <CustomText
@@ -52,57 +82,39 @@ export default function UpdatePasswordScreen() {
           </View>
 
           <View style={styles.centeredContent}>
-            {/* New Password Field */}
-            <View style={styles.inputContainer}>
-              <CustomText
-                label="New Password"
-                fontSize={13}
-                fontFamily={Fonts.SemiBold}
-                color={Colors.black}
-                marginBottom={metrics.height(10)}
-              />
-              <ControlledCustomInput
-                control={control}
-                name="newPassword"
-                placeholder="Enter new password"
-                secureTextEntry
-                placeholderTextColor={Colors.gray}
-                backgroundColor={'#FAFAFA'}
-                borderColor={'#FAFAFA'}
-                right={true}
-              />
-              <View style={styles.hintContainer}>
-                <MaterialIcons name="info-outline" size={16} color={Colors.gray} />
+            {passwordFields.map((field) => (
+              <View key={field.name} style={styles.inputContainer}>
                 <CustomText
-                  label="Should be atleast 8 characters long"
-                  fontSize={12}
-                  fontFamily={Fonts.Regular}
-                  color={Colors.gray}
-                  marginLeft={metrics.width(6)}
+                  label={field.label}
+                  fontSize={13}
+                  fontFamily={Fonts.SemiBold}
+                  color={Colors.black}
+                  marginBottom={metrics.height(10)}
                 />
+                <ControlledCustomInput
+                  control={control}
+                  name={field.name}
+                  placeholder={field.placeholder}
+                  secureTextEntry
+                  placeholderTextColor={Colors.gray}
+                  backgroundColor={inputBackgroundColor}
+                  borderColor={inputBackgroundColor}
+                  right={true}
+                />
+                {field.showHint && (
+                  <View style={styles.hintContainer}>
+                    <MaterialIcons name="info-outline" size={iconSize} color={Colors.gray} />
+                    <CustomText
+                      label="Should be atleast 8 characters long"
+                      fontSize={12}
+                      fontFamily={Fonts.Regular}
+                      color={Colors.gray}
+                      marginLeft={metrics.width(6)}
+                    />
+                  </View>
+                )}
               </View>
-            </View>
-
-            {/* Confirm New Password Field */}
-            <View style={styles.inputContainer}>
-              <CustomText
-                label="Confirm New Password"
-                fontSize={13}
-                fontFamily={Fonts.SemiBold}
-                color={Colors.black}
-                marginBottom={metrics.height(10)}
-              />
-              <ControlledCustomInput
-                control={control}
-                name="confirmPassword"
-                placeholder="Confirm new password"
-                secureTextEntry
-                placeholderTextColor={Colors.gray}
-                backgroundColor={'#FAFAFA'}
-                borderColor={'#FAFAFA'}
-                right={true}
-              />
-            </View>
+            ))}
           </View>
         </KeyboardAwareScrollView>
 
@@ -130,21 +142,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
+    flexGrow: 1,
     paddingHorizontal: metrics.width(25),
     paddingTop: metrics.height(80),
     paddingBottom: metrics.height(150),
-    minHeight: '100%',
-  },
-  backButton: {
-    position: 'absolute',
-    top: metrics.height(20),
-    left: metrics.width(25),
-    width: metrics.width(40),
-    height: metrics.width(40),
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    zIndex: 10,
   },
   header: {
     width: '100%',
@@ -152,9 +157,8 @@ const styles = StyleSheet.create({
     marginBottom: metrics.height(40),
   },
   centeredContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: metrics.height(100),
+    width: '100%',
+    marginTop: metrics.height(80),
   },
   inputContainer: {
     width: '100%',
